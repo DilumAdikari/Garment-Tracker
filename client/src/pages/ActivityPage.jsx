@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import api, { errorMessage } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
 import Pagination from '../components/Pagination';
 import Spinner from '../components/Spinner';
@@ -21,25 +22,34 @@ const ACTION_TONES = {
 };
 
 export default function ActivityPage() {
+  const { isAdmin } = useAuth();
   const [items, setItems] = useState([]);
   const [pages, setPages] = useState(1);
   const [page, setPage] = useState(1);
   const [action, setAction] = useState('');
+  const [userId, setUserId] = useState('');
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Admin only: list of users for the filter dropdown.
+  useEffect(() => {
+    if (!isAdmin) return;
+    api.get('/users').then(({ data }) => setUsers(data.items)).catch(() => {});
+  }, [isAdmin]);
 
   useEffect(() => {
     setLoading(true);
     api
-      .get('/activity', { params: { page, limit: 25, action } })
+      .get('/activity', { params: { page, limit: 25, action, user: userId } })
       .then(({ data }) => {
         setItems(data.items);
         setPages(data.pages);
       })
       .catch((err) => toast.error(errorMessage(err)))
       .finally(() => setLoading(false));
-  }, [page, action]);
+  }, [page, action, userId]);
 
-  useEffect(() => setPage(1), [action]);
+  useEffect(() => setPage(1), [action, userId]);
 
   return (
     <>
@@ -47,12 +57,22 @@ export default function ActivityPage() {
         title="Activity log"
         subtitle="Every issue, entry, change and export, with who did it and when"
         actions={
-          <select className="input w-auto" value={action} onChange={(e) => setAction(e.target.value)} aria-label="Filter by action">
-            <option value="">All actions</option>
-            {Object.keys(ACTIVITY_LABELS).map((k) => (
-              <option key={k} value={k}>{ACTIVITY_LABELS[k]}</option>
-            ))}
-          </select>
+          <div className="flex flex-wrap items-center gap-2">
+            {isAdmin && (
+              <select className="input w-auto" value={userId} onChange={(e) => setUserId(e.target.value)} aria-label="Filter by user">
+                <option value="">All users</option>
+                {users.map((u) => (
+                  <option key={u._id} value={u._id}>{u.name} ({u.username})</option>
+                ))}
+              </select>
+            )}
+            <select className="input w-auto" value={action} onChange={(e) => setAction(e.target.value)} aria-label="Filter by action">
+              <option value="">All actions</option>
+              {Object.keys(ACTIVITY_LABELS).map((k) => (
+                <option key={k} value={k}>{ACTIVITY_LABELS[k]}</option>
+              ))}
+            </select>
+          </div>
         }
       />
 
@@ -73,6 +93,13 @@ export default function ActivityPage() {
                     <span className="text-xs text-slate-400">{a.entity}</span>
                   </div>
                   <p className="mt-1 text-sm text-slate-800">{a.description}</p>
+                  {isAdmin && (a.ipAddress || a.entityId) && (
+                    <p className="mt-1 font-mono text-[11px] text-slate-400">
+                      {a.ipAddress && <>IP {a.ipAddress}</>}
+                      {a.ipAddress && a.entityId && ' · '}
+                      {a.entityId && <>ID {a.entityId}</>}
+                    </p>
+                  )}
                 </div>
                 <div className="shrink-0 text-left text-xs text-slate-500 sm:text-right">
                   <p className="font-medium text-slate-700">{a.username || 'system'}</p>
