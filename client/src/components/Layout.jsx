@@ -34,7 +34,7 @@ export default function Layout() {
           <Scissors className="h-5 w-5 text-white" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-white">Garment Tracker</p>
+          <p className="text-sm font-semibold text-white">Style Tracker</p>
           <p className="text-xs text-slate-400">Production control</p>
         </div>
       </div>
