@@ -176,7 +176,7 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-
+{/* 
           <div className="card mt-6">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <h2 className="font-semibold text-slate-800">Recent activity</h2>
@@ -197,7 +197,7 @@ export default function DashboardPage() {
             ) : (
               <EmptyState title="No activity yet" />
             )}
-          </div>
+          </div> */}
         </>
       )}
     </>
